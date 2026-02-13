@@ -17,11 +17,9 @@ def send_discord(message):
     except Exception as e:
         print("Discord送信失敗:", e)
 
-
 def load_products():
     with open(PRODUCT_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
-
 
 def load_status():
     if os.path.exists(STATUS_FILE):
@@ -29,11 +27,9 @@ def load_status():
             return json.load(f)
     return {}
 
-
 def save_status(status):
     with open(STATUS_FILE, "w", encoding="utf-8") as f:
         json.dump(status, f, indent=2)
-
 
 def check_stock(product, previous_status):
     product_id = product["id"]
@@ -75,15 +71,6 @@ def check_stock(product, previous_status):
         )
         return previous_status.get(product_id, False)
 
-summary_lines = []
-for item_id, status in current_status.items():
-    icon = "🟢" if status else "🔴"
-    summary_lines.append(f"{icon} {item_id}")
-
-if IS_SCHEDULE:
-    summary_message = "📊 本日の在庫状況\n\n" + "\n".join(summary_lines)
-    send_discord(summary_message)
-
 if __name__ == "__main__":
     print("=== 状態変化監視モード ===")
 
@@ -91,9 +78,21 @@ if __name__ == "__main__":
     previous_status = load_status()
     new_status = {}
 
+    # --- 商品チェック ---
     for product in products:
         new_status[product["id"]] = check_stock(product, previous_status)
 
+    # --- 状態保存 ---
     save_status(new_status)
+
+    # --- サマリー通知 ---
+    if IS_SCHEDULE:
+        summary_lines = []
+        for item_id, status in new_status.items():  # ← ここを current_status → new_status に修正
+            icon = "🟢" if status else "🔴"
+            summary_lines.append(f"{icon} {item_id}")
+
+        summary_message = "📊 本日の在庫状況\n\n" + "\n".join(summary_lines)
+        send_discord(summary_message)
 
     print("=== 処理終了 ===")
