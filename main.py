@@ -5,7 +5,8 @@ import os
 PRODUCT_FILE = "products.json"
 STATUS_FILE = "stock_status.json"
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-IS_SCHEDULE = os.getenv("GITHUB_EVENT_NAME") == "schedule"
+GITHUB_EVENT_NAME = os.getenv("GITHUB_EVENT_NAME")
+SHOULD_SEND_SUMMARY = GITHUB_EVENT_NAME in ["schedule", "workflow_dispatch"] or GITHUB_EVENT_NAME is None
 
 def send_discord(message):
     if not DISCORD_WEBHOOK_URL:
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     save_status(new_status)
 
     # --- サマリー通知 ---
-    if IS_SCHEDULE:
+    if SHOULD_SEND_SUMMARY:
         summary_lines = []
         for item_id, status in new_status.items():  # ← ここを current_status → new_status に修正
             icon = "🟢" if status else "🔴"
