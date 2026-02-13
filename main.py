@@ -89,9 +89,10 @@ if __name__ == "__main__":
     # --- サマリー通知 ---
     if SHOULD_SEND_SUMMARY:
         summary_lines = []
-        for item_id, status in new_status.items():  # ← ここを current_status → new_status に修正
+        for product in products:
+            status = new_status.get(product["id"])
             icon = "🟢" if status else "🔴"
-            summary_lines.append(f"{icon} {item_id}")
+            summary_lines.append(f"{icon} {product['name']}\n{product['url']}")
 
         summary_message = "📊 本日の在庫状況\n\n" + "\n".join(summary_lines)
         send_discord(summary_message)
