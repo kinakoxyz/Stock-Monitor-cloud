@@ -1,14 +1,17 @@
 [
-    {
-        "url": "https://jpbulk.daisonet.com/products/4550480560472",
-        "name": "大口注文用ヘビーシンキングペンシル１００ｍｍ"
-    },
-    {
-        "url": "https://jpbulk.daisonet.com/products/4550480499987",
-        "name": "大口注文用ロングビルミノー（１２０ｍｍ）"
-    },
-    {
-        "url": "https://jp.daisonet.com/products/4550480560472",
-        "name": "小口注文用ヘビーシンキングペンシル１００ｍｍ"
-    }
+  {
+    "id": "4550480560472_bulk",
+    "url": "https://jpbulk.daisonet.com/products/4550480560472",
+    "name": "大口注文用ヘビーシンキングペンシル１００ｍｍ"
+  },
+  {
+    "id": "4550480499987_bulk",
+    "url": "https://jpbulk.daisonet.com/products/4550480499987",
+    "name": "大口注文用ロングビルミノー（１２０ｍｍ）"
+  },
+  {
+    "id": "4550480560472_retail",
+    "url": "https://jp.daisonet.com/products/4550480560472",
+    "name": "小口注文用ヘビーシンキングペンシル１００ｍｍ"
+  }
 ]

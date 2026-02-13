@@ -1,93 +1,91 @@
 import requests
 import json
 import os
-import sys
-
-# --- 設定 ---
 
 PRODUCT_FILE = "products.json"
+STATUS_FILE = "stock_status.json"
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 
-def load_products():
-    if os.path.exists(PRODUCT_FILE):
-        try:
-            with open(PRODUCT_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"❌ 設定ファイルの読み込みに失敗しました: {e}")
-            return []
-    else:
-        print(f"⚠ 設定ファイル {PRODUCT_FILE} が見つかりません。")
-        return []
-
-
-def send_discord_notification(message):
+def send_discord(message):
     if not DISCORD_WEBHOOK_URL:
-        print("❌ DISCORD_WEBHOOK_URL が設定されていません")
-        sys.exit(1)
-
-    data = {"content": message}
+        print("Webhook未設定")
+        return
 
     try:
-        response = requests.post(DISCORD_WEBHOOK_URL, json=data, timeout=10)
-        if response.status_code == 204:
-            print("✅ Discord通知 成功")
-        else:
-            print(f"❌ Discord通知 失敗: {response.status_code}")
+        requests.post(DISCORD_WEBHOOK_URL, json={"content": message}, timeout=10)
     except Exception as e:
-        print("❌ Discord送信エラー:", e)
+        print("Discord送信失敗:", e)
 
 
-# --- 在庫チェック ---
+def load_products():
+    with open(PRODUCT_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-def check_stock(product):
-    print(f"在庫確認中: {product['name']}")
+
+def load_status():
+    if os.path.exists(STATUS_FILE):
+        with open(STATUS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def save_status(status):
+    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+        json.dump(status, f, indent=2)
+
+
+def check_stock(product, previous_status):
+    product_id = product["id"]
 
     try:
         api_url = product["url"] + ".js"
-
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json"
-        }
-
-        response = requests.get(api_url, headers=headers, timeout=10)
+        response = requests.get(api_url, timeout=10)
 
         if response.status_code != 200:
-            print(f"⚠ API取得失敗: {response.status_code}")
-            return
+            raise Exception(f"API取得失敗: {response.status_code}")
 
         data = response.json()
+        current_stock = any(v.get("available") for v in data.get("variants", []))
+        previous_stock = previous_status.get(product_id)
 
-        for variant in data.get("variants", []):
-            if variant.get("available"):
-                print("🟢 在庫あり")
-                send_discord_notification(
-                    f"🟢 在庫復活\n"
+        # --- 状態変化チェック ---
+        if previous_stock is not None:
+            if not previous_stock and current_stock:
+                send_discord(
+                    f"🟢 在庫復活！\n"
                     f"商品名: {product['name']}\n"
                     f"URL: {product['url']}"
                 )
-                return
 
-        print("🔴 在庫なし")
+            elif previous_stock and not current_stock:
+                send_discord(
+                    f"🔴 売り切れ！\n"
+                    f"商品名: {product['name']}\n"
+                    f"URL: {product['url']}"
+                )
+
+        return current_stock
 
     except Exception as e:
-        print("❌ エラー:", e)
+        send_discord(
+            f"❌ エラー発生\n"
+            f"商品名: {product['name']}\n"
+            f"内容: {str(e)}"
+        )
+        return previous_status.get(product_id, False)
 
-
-# --- 実行 ---
 
 if __name__ == "__main__":
-    print("=== GitHub Actions 在庫監視開始 ===")
+    print("=== 状態変化監視モード ===")
 
     products = load_products()
-
-    if not products:
-        print("監視対象がありません")
-        sys.exit(0)
+    previous_status = load_status()
+    new_status = {}
 
     for product in products:
-        check_stock(product)
+        new_status[product["id"]] = check_stock(product, previous_status)
+
+    save_status(new_status)
 
     print("=== 処理終了 ===")
