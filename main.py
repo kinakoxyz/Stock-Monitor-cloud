@@ -5,7 +5,7 @@ import os
 PRODUCT_FILE = "products.json"
 STATUS_FILE = "stock_status.json"
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-
+IS_SCHEDULE = os.getenv("GITHUB_EVENT_NAME") == "schedule"
 
 def send_discord(message):
     if not DISCORD_WEBHOOK_URL:
@@ -75,6 +75,14 @@ def check_stock(product, previous_status):
         )
         return previous_status.get(product_id, False)
 
+summary_lines = []
+for item_id, status in current_status.items():
+    icon = "🟢" if status else "🔴"
+    summary_lines.append(f"{icon} {item_id}")
+
+if IS_SCHEDULE:
+    summary_message = "📊 本日の在庫状況\n\n" + "\n".join(summary_lines)
+    send_discord(summary_message)
 
 if __name__ == "__main__":
     print("=== 状態変化監視モード ===")
