@@ -3,7 +3,7 @@ name: Stock Check
 on:
   schedule:
     - cron: '0 * * * *'    # 毎時チェック（変化通知用）
-    - cron: '0 3 * * *'    # 毎日12:00 サマリー用
+    - cron: '*/5 * * * *'    # 毎日12:00 サマリー用
   workflow_dispatch:
 
 jobs:
