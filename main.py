@@ -70,14 +70,14 @@ def check_stock(product, previous_status):
         if previous_stock is not None:
             if not previous_stock and current_stock:
                 send_discord(
-                    f"🟢 在庫復活！\n"
+                    f"🟢 在庫復活\n"
                     f"商品名: {product['name']}\n"
                     f"URL: {product['url']}"
                 )
 
             elif previous_stock and not current_stock:
                 send_discord(
-                    f"🔴 売り切れ！\n"
+                    f"🔴 売り切れ\n"
                     f"商品名: {product['name']}\n"
                     f"URL: {product['url']}"
                 )
