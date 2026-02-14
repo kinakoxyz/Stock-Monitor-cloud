@@ -1,12 +1,26 @@
 import requests
 import json
 import os
+from datetime import datetime, timezone
 
 PRODUCT_FILE = "products.json"
 STATUS_FILE = "stock_status.json"
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 GITHUB_EVENT_NAME = os.getenv("GITHUB_EVENT_NAME")
-SHOULD_SEND_SUMMARY = GITHUB_EVENT_NAME in ["schedule", "workflow_dispatch"] or GITHUB_EVENT_NAME is None
+
+def check_should_send_summary():
+    # 手動実行(workflow_dispatch) または ローカル実行(None) の場合は常にサマリー送信
+    if GITHUB_EVENT_NAME == "workflow_dispatch" or GITHUB_EVENT_NAME is None:
+        return True
+    
+    # スケジュール実行(schedule) の場合は、UTC 3時（JST 12時）台のみ送信
+    if GITHUB_EVENT_NAME == "schedule":
+        now_utc = datetime.now(timezone.utc)
+        return now_utc.hour == 3
+    
+    return False
+
+SHOULD_SEND_SUMMARY = check_should_send_summary()
 
 def send_discord(content=None, embeds=None):
     if not DISCORD_WEBHOOK_URL:
