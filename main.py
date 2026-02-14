@@ -8,13 +8,19 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 GITHUB_EVENT_NAME = os.getenv("GITHUB_EVENT_NAME")
 SHOULD_SEND_SUMMARY = GITHUB_EVENT_NAME in ["schedule", "workflow_dispatch"] or GITHUB_EVENT_NAME is None
 
-def send_discord(message):
+def send_discord(content=None, embeds=None):
     if not DISCORD_WEBHOOK_URL:
         print("Webhook未設定")
         return
 
+    payload = {}
+    if content:
+        payload["content"] = content
+    if embeds:
+        payload["embeds"] = embeds
+
     try:
-        requests.post(DISCORD_WEBHOOK_URL, json={"content": message}, timeout=10)
+        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)
     except Exception as e:
         print("Discord送信失敗:", e)
 
@@ -88,13 +94,16 @@ if __name__ == "__main__":
 
     # --- サマリー通知 ---
     if SHOULD_SEND_SUMMARY:
-        summary_lines = []
+        description_lines = []
         for product in products:
             status = new_status.get(product["id"])
             icon = "🟢" if status else "🔴"
-            summary_lines.append(f"{icon} {product['name']}\n{product['url']}")
+            description_lines.append(f"{icon} [{product['name']}]({product['url']})")
 
-        summary_message = "📊 本日の在庫状況\n\n" + "\n".join(summary_lines)
-        send_discord(summary_message)
+        embed = {
+            "title": "📊 本日の在庫状況",
+            "description": "\n".join(description_lines)
+        }
+        send_discord(embeds=[embed])
 
     print("=== 処理終了 ===")
