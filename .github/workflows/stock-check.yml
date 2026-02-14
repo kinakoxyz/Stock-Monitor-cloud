@@ -14,10 +14,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Restore stock status
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: stock_status.json
-          key: stock-status-cache
+          key: stock-status-cache-${{ github.run_id }}
+          restore-keys: stock-status-cache-
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,4 +37,4 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: stock_status.json
-          key: stock-status-cache
+          key: stock-status-cache-${{ github.run_id }}
